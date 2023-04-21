@@ -70,7 +70,6 @@ public:
     virtual void update()=0;
     virtual void stop()=0;
     virtual bool isRunning()=0;
-
 };
 
 
@@ -128,7 +127,9 @@ public:
             timelines[i]->start();
         }
         isRunning_=true;
+        #ifdef Motion_Debug
         Serial.println("motion start");
+        #endif
         #ifdef BLYNK        
         Blynk.virtualWrite(V11,"motion "+name+"\n");
         #endif
@@ -156,7 +157,9 @@ public:
     }
 
     void stop(){
+      #ifdef Motion_Debug
       Serial.println("motion fin");
+      #endif
       device_release();
     }
 
@@ -267,7 +270,6 @@ public:
   
   
 };
-
 
 
 #endif

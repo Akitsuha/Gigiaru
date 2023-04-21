@@ -110,7 +110,6 @@ public:
 
 Speaker speaker;
 
-
 void loadMP3(string filename)
 {
   file = new AudioFileSourceSPIFFS(filename.c_str());
