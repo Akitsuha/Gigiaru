@@ -5,6 +5,7 @@
 #include <memory>
 using std::vector;
 using std::unique_ptr;
+using std::shared_ptr;
 using std::string;
 
 enum EMG_state{
@@ -42,6 +43,8 @@ public:
 
     virtual float EMG_update()=0;
 };
+
+typedef shared_ptr<EMG> EMG_ptr;
 
 class Uni_EMG:public EMG{
 protected:

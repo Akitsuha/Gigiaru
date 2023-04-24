@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <math.h>
+#include "motion.h"
 using std::vector;
 using std::unique_ptr;
 using std::shared_ptr;
@@ -28,14 +29,25 @@ struct MemoryPiece{
     u_int8_t entropy;
     u_int16_t stamp;
 };
-
 typedef shared_ptr<MemoryPiece> Memory_ptr;
+
+struct ActionValue{
+    Motion_ptr motion;
+    u_int8_t value;
+};
+typedef shared_ptr<ActionValue> ActionVal_ptr;
+ActionVal_ptr make_actionval_ptr(ActionValue* av){
+    return shared_ptr<ActionValue>(av);
+}
+
+#define ActionRec_th 100
 
 class GigiMemory{
 private:
     vector<Memory_ptr> raw={};
-    vector<vector<u_int8_t>> experience={};
-    //vector<u_int8_t> avr={};
+    vector<ActionVal_ptr> experience={};
+    Motion_ptr last_motion=nullptr;
+
     unsigned long step=0;
     int step_phase=0;
     
@@ -55,6 +67,7 @@ public:
     }
 
     void add(MemoryPiece* data){
+        u_int8_t value=data->entropy;
         data->stamp=step%65536;
         xSemaphoreTake(xMemoryMutex, portMAX_DELAY);
         raw.push_back(make_ptr(data));
@@ -62,12 +75,17 @@ public:
         step++;
 
         /*3.価値の高いイベントが起こった時、直前に行ったモーション(add_actionで記録)とともに記録*/
+        if(value>ActionRec_th && last_motion!=nullptr){
+            experience.push_back(make_actionval_ptr(new ActionValue{last_motion,value}));
+        }
+
     }
 
-    void add_action(/*状況,モーション*/){
+    void add_action(Motion_ptr motion){
         /*1.直前にあったエントロピーの高い記憶をピック*/
 
         /*2.イベント、状況、モーションを記録*/
+        last_motion=motion;
     }
 
     void oblivion(){

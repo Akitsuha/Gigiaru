@@ -32,10 +32,6 @@ const char* pass = "12a85eb203772";
 #endif
 
 #include "gigi.h"
-#include "motion.h"
-#include "Motion_servo.h"
-#include "Motion_r_servo.h"
-#include "Motion_library.h"
 
 void setup() {
 
@@ -93,13 +89,6 @@ void loop() {
  * 
 */
 #ifdef BLYNK
-BLYNK_WRITE(V2)
-{
-  Serial.print("roar");
-
-  voice("600");
-}
-
 BLYNK_WRITE(V5)
 {
   float angle = param.asFloat();
@@ -117,18 +106,5 @@ BLYNK_WRITE(V1)
   //45degに1000ms角度固定
 }
 
-BLYNK_WRITE(V4)
-{
-  int motion = param.asInt(); // assigning incoming value from pin V1 to a variable
-  
-  start_motion(motion);
-}
-
-BLYNK_WRITE(V3)
-{
-  //Motion_R_Servo_h::stop(2);
-  servo.release();
-  //45degに1000ms角度固定
-}
 #endif
 

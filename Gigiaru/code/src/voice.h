@@ -1,4 +1,4 @@
-#ifndef Voice_h
+/*#ifndef Voice_h
 #define Voice_h
 
 #include "motion.h"
@@ -103,7 +103,7 @@ void hear(){
 class Speaker:public IDevice
 {
 private:
-    /* data */
+
 public:
 
 };
@@ -198,4 +198,4 @@ public:
 
 };
 
-#endif
+#endif*/

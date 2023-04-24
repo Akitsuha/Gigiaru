@@ -2,15 +2,17 @@
 #define Decision_h
 
 #include "my_memory.h"
-#include "planning.h"
+#include "motion.h"
 
 class Decision
 {
 private:
     GigiMemory* memory;
-    Planning* planning;
+    ValActControler* servo_ctr;
+    ValActControler* r_servo_ctr;
 public:
-    Decision(GigiMemory* memory,Planning* planning):memory(memory),planning(planning){}
+    Decision(GigiMemory* memory,ValActControler* servo_ctr,ValActControler* r_servo_ctr):
+            memory(memory),servo_ctr(servo_ctr),r_servo_ctr(r_servo_ctr){}
     void loop(){
         static u_int8_t trace_th=50;
         Memory_ptr last;
@@ -31,11 +33,24 @@ public:
         #endif
 
         if(last->ToF_V-last->ToF_T>trace_th){
-            planning->turn(100,10);
+            turn(100,10);
         }
         else if(last->ToF_T-last->ToF_V>trace_th){
-            planning->turn(100,-10);
+            turn(100,-10);
         }
+    }
+private:
+    void turn(int duration,float angle){
+        Motion_ptr motion=make_motion_ptr(new Motion(new EMG_rel(duration,angle,CSC_INTENTIONAL,100),nullptr));
+        bool ret=motion->start(servo_ctr,r_servo_ctr);
+        
+        if(ret){
+            /*2.メモリーに行った状況とモーションを記録*/
+
+        }
+    }
+    void turn_to(){
+
     }
 };
 

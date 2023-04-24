@@ -65,9 +65,7 @@ void r_servo_task(void *pvParameters){
     
 }
 
-Planning planning(&servo_ctr);
-
-Decision decision(&memory,&planning);
+Decision decision(&memory,&servo_ctr,&r_servo_ctr);
 void decision_task(void *pvParameters){
     while (1)
     {
