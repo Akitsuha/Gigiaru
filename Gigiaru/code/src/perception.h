@@ -63,8 +63,7 @@ public:
             entr_sum+=dif;
         }
         u_int8_t entropy=entr_sum/(EYE_RESO*EYE_RESO*2);
-        vector<u_int8_t> data={T_sig->get_avr(),V_sig->get_avr(),0,0,entropy};
-        memory->add(data);
+        memory->add(new MemoryPiece{T_sig->get_avr(),V_sig->get_avr(),0,0,entropy,0});
     }
 };
 

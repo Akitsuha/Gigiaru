@@ -1,8 +1,13 @@
 #ifndef MyMemory_h
 #define MyMemory_h
 
-#include "work_memory.h"
+#include <vector>
+#include <memory>
 #include <math.h>
+using std::vector;
+using std::unique_ptr;
+using std::shared_ptr;
+
 
 #define TOF_V 0
 #define TOF_T 1
@@ -13,25 +18,46 @@
 #define STAMP_M 6
 #define NUM_DATA_TYPE 2
 
-class GigiMemory:public Memory{
-private:
+SemaphoreHandle_t xMemoryMutex = NULL;//I2C排他制御用のミューテックス
 
-    vector<u_int8_t> avr={};
+struct MemoryPiece{
+    u_int8_t ToF_V;
+    u_int8_t ToF_T;
+    u_int8_t sound;
+    u_int8_t food;
+    u_int8_t entropy;
+    u_int16_t stamp;
+};
+
+typedef shared_ptr<MemoryPiece> Memory_ptr;
+
+class GigiMemory{
+private:
+    vector<Memory_ptr> raw={};
+    vector<vector<u_int8_t>> experience={};
+    //vector<u_int8_t> avr={};
     unsigned long step=0;
     int step_phase=0;
     
-    bool forgotten(const vector<uint8_t>& data){
-        uint16_t ent=128*(uint16_t)data[ENTROPY];
-        uint16_t time = (uint16_t)step%65536 - (256*(uint16_t)data[STAMP_M]+(uint16_t)data[STAMP_L]);
+    bool forgotten(const Memory_ptr& data){
+        uint16_t ent=128*(uint16_t)(data->entropy);
+        uint16_t time = (uint16_t)step%65536 - data->stamp;
         return time>=ent;
     }
-public:
 
-    void add(vector<uint8_t> data){
-        data.push_back(step%256);
-        data.push_back((step/256)%256);
+    Memory_ptr make_ptr(MemoryPiece* data){
+        return shared_ptr<MemoryPiece>(data);
+    }
+public:
+    GigiMemory(){
+        xMemoryMutex = xSemaphoreCreateMutex();
+        xSemaphoreGive(xMemoryMutex);
+    }
+
+    void add(MemoryPiece* data){
+        data->stamp=step%65536;
         xSemaphoreTake(xMemoryMutex, portMAX_DELAY);
-        raw.push_back(data);
+        raw.push_back(make_ptr(data));
         xSemaphoreGive(xMemoryMutex);
         step++;
 
@@ -58,6 +84,10 @@ public:
         }
         xSemaphoreGive(xMemoryMutex);
         
+    }
+
+    const vector<Memory_ptr>& get(){
+        return raw;
     }
 };
 
