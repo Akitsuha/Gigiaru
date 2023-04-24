@@ -10,6 +10,7 @@ class Memory
 {
 protected:
     vector<vector<u_int8_t>> raw={};
+    vector<vector<u_int8_t>> experience={};
 public:
     Memory(){
         xMemoryMutex = xSemaphoreCreateMutex();

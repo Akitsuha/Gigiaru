@@ -64,7 +64,7 @@ public:
                 u_int8_t value=0;
                 if(raw<4096)
                 {
-                    value=255-raw/16;
+                    value=255-(u_int8_t)(log2(raw)*21.25);// =255/12
                 }
                 data[myResults.results[i].sub_capture*8+myResults.results[i].channel-1]=value;
             }
@@ -107,7 +107,7 @@ public:
                 u_int8_t value=0;
                 if(raw<4096)
                 {
-                    value=255-raw/16;
+                    value=255-(u_int8_t)(log2(raw)*21.25);// =255/12
                 }
                 data[i]=value;
             }

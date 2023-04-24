@@ -12,6 +12,7 @@ public:
     
     void turn(int duration,float angle){
         servo_ctr->add(new EMG_rel(duration,angle,CSC_INTENTIONAL,100));
+        /*2.メモリーに行った状況とモーションを記録*/
     }
     void turn_to(){
 

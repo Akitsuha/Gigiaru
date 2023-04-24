@@ -86,6 +86,26 @@ void biokinesis_task(void *pvParameters){
 }
 
 #ifdef BLYNK
+#define BLYNK_LCD V4
+WidgetLCD lcd(BLYNK_LCD);
+
+void Blynk_ToF_image(){
+
+    shared_ptr<Signal> T_sig=T_eye->get();
+    shared_ptr<Signal> V_sig=V_eye->get();
+    vector<u_int8_t> T_image=T_sig->get_raw();
+    vector<u_int8_t> V_image=V_sig->get_raw();
+    if(T_image.size()==EYE_RESO*EYE_RESO && V_image.size()==EYE_RESO*EYE_RESO){
+        for (int y = 0 ; y < EYE_RESO ; y ++)
+        {
+            for (int x = 0 ; x< EYE_RESO;  x++)
+            {
+                Blynk.virtualWrite(x+y*EYE_RESO+16,T_image[x+y*EYE_RESO]);
+            }
+        }
+    }
+
+}
 void blynk_task(void *pvParameters){
     while (1)
     {   
@@ -100,6 +120,7 @@ void blynk_task(void *pvParameters){
             Blynk.virtualWrite(5,servo_.get_value());
             Blynk.virtualWrite(0,T_sig->get_avr());
             Blynk.virtualWrite(7,V_sig->get_avr());
+            Blynk_ToF_image();
             pre_update=millis();
         }
         
