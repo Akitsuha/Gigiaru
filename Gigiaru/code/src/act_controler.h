@@ -1,7 +1,6 @@
 #ifndef ActControler_h
 #define ActControler_h
 
-#include <Tween.h>
 #include <vector>
 #include "actuator.h"
 #include "emg.h"
@@ -55,13 +54,13 @@ public:
     }
 
     void loop(){
-        if (emg!=nullptr && (emg->get_state()==EMG_RUNNING ||emg->get_state()==EMG_READY)){
+        if (emg!=nullptr && (emg->get_state()==EMG_RUNNING ||emg->get_state()==EMG_READY || emg->get_state()==EMG_PAUSE)){
             #ifdef DEBUG
-            //Serial.printf("act%d start new emg id:%d\n",id,emg->get_id());
+            //Serial.printf("ValActControler::loop\n");
             #endif
             actuator->set_value(emg->EMG_update());
 
-            if(emg->get_state()==EMG_DONE){
+            if(emg->get_state()==EMG_PAUSE || emg->get_state()==EMG_DONE){
                 actuator->release();
             }
         }

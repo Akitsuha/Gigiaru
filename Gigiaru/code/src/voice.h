@@ -1,11 +1,9 @@
 /*#ifndef Voice_h
 #define Voice_h
 
-#include "motion.h"
-
-#include  <string.h>
-#include <driver/i2s.h>
-#include "FS.h"
+#include <string.h>
+//#include <driver/i2s.h>
+//#include "FS.h"
 #include "SPIFFS.h"
 #include "AudioFileSourceSPIFFS.h"
 #include "AudioFileSourceID3.h"
@@ -22,7 +20,7 @@ AudioOutputI2S *out;
 #define CONFIG_I2S_DATA_IN_PIN 23
 #define FILENAME "/600.mp3" // "/ohayo.mp3"
 
-#define SPEAKER_I2S_NUMBER I2S_NUM_0
+//#define SPEAKER_I2S_NUMBER I2S_NUM_0
 
 #define MODE_MIC 0
 #define MODE_SPK 1
@@ -30,6 +28,7 @@ AudioOutputI2S *out;
 #define I2S_BUFFER_COUNT            2//(1,216)でリブートした。小さすぎるとダメ？
 #define I2S_BUFFER_SIZE             128
 
+/*
 void InitI2SSpeakerOrMic(int mode)
 {
     esp_err_t err = ESP_OK;
@@ -98,18 +97,9 @@ void hear(){
         
     }
     
-}
+}*/
 
-class Speaker:public IDevice
-{
-private:
-
-public:
-
-};
-
-Speaker speaker;
-
+/*
 void loadMP3(string filename)
 {
   file = new AudioFileSourceSPIFFS(filename.c_str());
@@ -130,72 +120,23 @@ void voice_setup(){
     audioLogger = &Serial;
     out = new AudioOutputI2S();
     out->SetPinout(CONFIG_I2S_BCK_PIN, CONFIG_I2S_LRCK_PIN, CONFIG_I2S_DATA_PIN);
+    out->SetChannels(1);
     out->SetGain(0.4);
     mp3 = new AudioGeneratorMP3();
 }
 
 bool voice_loop(){
-  if (!mp3->loop()){
-    Serial.println("MP3 task stop");
-     mp3->stop();
-     return false;
-  }
-  return true;
+    if (mp3->isRunning()){
+        Serial.println("loop");
+        if (!mp3->loop()){
+            Serial.println("MP3 task stop");
+            mp3->stop();
+            return false;
+        }
+        return true;
+    }
+    return false;
+  
 }
-
-class TVoice:public ITimeline{
-private:
-    std::vector<frame<string>> timeline;
-    int idx=0;
-    unsigned long start_us=0;
-    bool last=false;
-    bool _isRunning=false;
-    bool isPlaying=false;
-
-public:
-    TVoice(std::vector<frame<string>> timeline):ITimeline(&speaker){
-        this->timeline=timeline;
-    }
-
-    void start(){
-        idx=0;
-        start_us=micros();
-        last=false;
-        _isRunning=true;
-    }
-
-    void update(){
-      if(_isRunning){
-        if (isPlaying)
-        {
-            if (!voice_loop()){
-                isPlaying=false;
-                if(last){
-                    stop();
-                }
-            }
-        }
-        else if(timeline[idx].t_ms*1000 < micros()-start_us){
-            isPlaying=true;
-            voice(timeline[idx].value);
-            idx++;
-            if (idx==timeline.size())
-            {
-                last=true;
-            }
-        }
-      }
-    }
-
-    void stop(){
-        _isRunning=false;
-        isPlaying=false;
-    }
-
-    bool isRunning(){
-      return _isRunning;
-    }
-
-};
 
 #endif*/

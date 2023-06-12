@@ -3,38 +3,30 @@
 
 #include <memory>
 #include "act_controler.h"
+#include "motion_plot.h"
 
 using std::shared_ptr;
 
 class Motion{
-    EMG_ptr servo_motion=nullptr;
-    EMG_ptr r_servo_motion=nullptr;
+    Plot_ptr plot;
 
 public:
-    Motion(EMG* servo_motion=nullptr,EMG* r_servo_motion=nullptr)
-    {
-        if(servo_motion!=nullptr){
-            this->servo_motion=make_ptr(servo_motion);
-        }
-        if(r_servo_motion!=nullptr){
-            this->r_servo_motion=make_ptr(r_servo_motion);
-        }
-    }
+    Motion(const Plot_ptr& plot):plot(plot){}
 
-    bool start(ValActControler* servo_ctr,ValActControler* r_servo_ctr){
+    bool start(std::map<int,ValActControler*>& actuators){
         bool ret=false;
-        if(servo_motion!=nullptr){
-            ret=(ret||servo_ctr->add(servo_motion));
-        }
-        if(r_servo_motion!=nullptr){
-            ret=(ret||r_servo_ctr->add(r_servo_motion));
+        const std::map<int,vector<Frame_typed>>& frames=plot->get_frame();
+        for(auto itr=frames.begin();itr!=frames.end();itr++){
+            if(actuators.find(itr->first)==actuators.end()){
+                continue;
+            }
+            ret|=actuators[itr->first]->add(new EMG_plot(itr->second,CSC_INTENTIONAL));
         }
         return ret;
     }
 
-protected:
-    EMG_ptr make_ptr(EMG* emg){
-        return shared_ptr<EMG>(emg);
+    Plot_ptr get_plot(){
+        return plot;
     }
 };
 
