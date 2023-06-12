@@ -3,7 +3,7 @@
 
 #include "actuator.h"
 
-#define R_SERVO_MAX 100.f
+#define R_SERVO_MAX 128.f
 
 namespace AK{
     class R_Servo:public ValActuator
@@ -50,7 +50,7 @@ namespace AK{
     void release(){
         ledcWrite(channel, 0);
         #ifdef DEBUG
-        Serial.println("rservo release");
+        //Serial.println("rservo release");
         #endif
     }
     };

@@ -1,11 +1,13 @@
 #include <Arduino.h>
+#include <ArduinoOTA.h>
+#include <ESPmDNS.h>
+#include <WiFiUdp.h>
 #include <freertos/FreeRTOS.h>
 #include <math.h>
 #include <stdlib.h>
 #include <Wire.h>
 
-#define DEBUG
-
+//#define DEBUG
 
 #define BLYNK
 #ifdef BLYNK
@@ -20,10 +22,11 @@
 #include <WiFiClient.h>
 #include <BlynkSimpleEsp32.h>
 
-//#include <ESP32Servo.h>
 char auth[] = BLYNK_AUTH_TOKEN;
 // Your WiFi credentials.
 // Set password to "" for open networks.
+//const char* ssid = "WARPSTAR-261622";
+//const char* pass = "03CA88A54957B";
 const char* ssid = "rs500k-b770d2-1";
 const char* pass = "12a85eb203772";
 //const char* ssid = "iPhooone";
@@ -32,9 +35,6 @@ const char* pass = "12a85eb203772";
 #endif
 
 #include "gigi.h"
-#include "motion.h"
-#include "Motion_servo.h"
-#include "Motion_r_servo.h"
 #include "Motion_library.h"
 
 void setup() {
@@ -45,6 +45,38 @@ void setup() {
   #endif
   delay(1000);
   Serial.println("mainのsetupを開始");
+
+
+  //ArduinoOTA.setHostname("myesp32");
+  
+  ArduinoOTA
+    .onStart([]() {
+      String type;
+      if (ArduinoOTA.getCommand() == U_FLASH)
+        type = "sketch";
+      else // U_SPIFFS
+        type = "filesystem";
+      Serial.println("Start updating " + type);
+    })
+    .onEnd([]() {
+      Serial.println("\nEnd");
+    })
+    .onProgress([](unsigned int progress, unsigned int total) {
+      Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+    })
+    .onError([](ota_error_t error) {
+      Serial.printf("Error[%u]: ", error);
+      if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+      else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+      else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+      else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+      else if (error == OTA_END_ERROR) Serial.println("End Failed");
+    });
+
+  ArduinoOTA.begin();
+
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
 
   //スピーカー
   //voice_setup();
@@ -61,30 +93,10 @@ void setup() {
   task_setup();
 }
 
-unsigned long pre_heatbeat=0;
-int bpm=2000;
 void loop() {
-  #ifdef BLYNK
-  
-  #endif
-  
-  //hear();
-  /*
-  if(millis()-pre_heatbeat>bpm){
-    heart();
-  }
-  int n=rand()%20;
-  if (n<=6)
-  {
-    //revi_swing();
-    //get_ToF();
-  }
-  else if(n<=7)
-  {
-    //joy();
-  }*/
-  
-  delay(10);
+  //voice_loop();
+  ArduinoOTA.handle();
+  delay(1);
 }
 
 
@@ -93,13 +105,6 @@ void loop() {
  * 
 */
 #ifdef BLYNK
-BLYNK_WRITE(V2)
-{
-  Serial.print("roar");
-
-  voice("600");
-}
-
 BLYNK_WRITE(V5)
 {
   float angle = param.asFloat();
@@ -117,18 +122,33 @@ BLYNK_WRITE(V1)
   //45degに1000ms角度固定
 }
 
-BLYNK_WRITE(V4)
+/*
+BLYNK_WRITE(V2)
 {
-  int motion = param.asInt(); // assigning incoming value from pin V1 to a variable
-  
-  start_motion(motion);
-}
+  voice(FILENAME);
+}*/
 
 BLYNK_WRITE(V3)
 {
-  //Motion_R_Servo_h::stop(2);
-  servo.release();
+  int motion_id = param.asInt(); // assigning incoming value from pin V1 to a variable
+
+  Motion_ptr motion=make_motion_ptr(new Motion(dance));
+  Serial.printf("blynk set V3:%d\n",motion_id);
+  motion->start(actuators);
   //45degに1000ms角度固定
 }
+
+BLYNK_WRITE(V10)
+{
+  int sleep = param.asInt(); // assigning incoming value from pin V1 to a variable
+
+  if(sleep==0){
+    wake_up();
+  }
+  else if(sleep==1){
+    deep_sleep();
+  }
+}
+
 #endif
 

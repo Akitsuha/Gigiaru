@@ -23,7 +23,7 @@ protected:
     //正規化された値。わかりやすさのため、遠いと0,近いと255
     vector<u_int8_t> data;
 public:
-    ToF_Eye(u_int16_t width):width(width)
+    ToF_Eye(int id,u_int16_t width):width(width),Sensor(id)
     {
         resolution=width*width;
         data.assign(resolution,UNCERTAIN_VALUE);
@@ -43,7 +43,7 @@ static struct tmf882x_msg_meas_results myResults;
 
 class TMF8821_Eye:public ToF_Eye{
 public:
-    TMF8821_Eye(u_int16_t width):ToF_Eye::ToF_Eye(width){
+    TMF8821_Eye(int id,u_int16_t width):ToF_Eye::ToF_Eye(id,width){
         if(!myTMF882X.begin(Wire1))
         {
             Serial.println("Error - The TMF882X failed to initialize - is the board connected?");
@@ -79,7 +79,7 @@ class VL53L5CX_Eye:public ToF_Eye{
 private:
 
 public:
-    VL53L5CX_Eye(u_int8_t width):ToF_Eye::ToF_Eye(width){
+    VL53L5CX_Eye(int id,u_int8_t width):ToF_Eye::ToF_Eye(id,width){
 
         Serial.println();
         Serial.println("setup:VL53L5CX");
@@ -115,16 +115,9 @@ public:
     }
 };
 
-#define EYE_RESO 4
-TMF8821_Eye* T_eye;
-VL53L5CX_Eye* V_eye;
-void ToF_setup(){
-    xMutex = xSemaphoreCreateMutex();
-    xSemaphoreGive(xMutex);
-    V_eye=new VL53L5CX_Eye(EYE_RESO);
-    T_eye=new TMF8821_Eye(EYE_RESO);
-}
 
+
+/*
 void ToF_image(){
 
     shared_ptr<Signal> T_sig=T_eye->get();
@@ -172,7 +165,7 @@ void ToF_image(){
         #endif
     }
 
-}
+}*/
 
 
 
