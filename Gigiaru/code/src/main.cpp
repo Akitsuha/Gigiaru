@@ -1,11 +1,14 @@
 #include <Arduino.h>
+#include <ArduinoOTA.h>
+#include <ESPmDNS.h>
+#include <WiFiUdp.h>
 #include <freertos/FreeRTOS.h>
 #include <math.h>
 #include <stdlib.h>
 #include <Wire.h>
+#include <vector>
 
-#define DEBUG
-
+//#define DEBUG
 
 #define BLYNK
 #ifdef BLYNK
@@ -20,10 +23,15 @@
 #include <WiFiClient.h>
 #include <BlynkSimpleEsp32.h>
 
-//#include <ESP32Servo.h>
 char auth[] = BLYNK_AUTH_TOKEN;
+
+const std::vector<std::vector<String>> ssid_list={{"rs500k-b770d2-1","12a85eb203772"},
+                                            {"WARPSTAR-261622","03CA88A54957B"},
+                                            {"iPhooone","s2jbe4om4rlj"}};
 // Your WiFi credentials.
 // Set password to "" for open networks.
+//const char* ssid = "WARPSTAR-261622";
+//const char* pass = "03CA88A54957B";
 const char* ssid = "rs500k-b770d2-1";
 const char* pass = "12a85eb203772";
 //const char* ssid = "iPhooone";
@@ -31,20 +39,19 @@ const char* pass = "12a85eb203772";
 
 #endif
 
+#include "debug.h"
 #include "gigi.h"
-#include "motion.h"
-#include "Motion_servo.h"
-#include "Motion_r_servo.h"
 #include "Motion_library.h"
+#include "blynk_admin.h"
 
 void setup() {
 
   Serial.begin(115200);
-  #ifdef BLYNK
-  Blynk.begin(auth, ssid, pass);
-  #endif
+
   delay(1000);
   Serial.println("mainのsetupを開始");
+  
+  
 
   //スピーカー
   //voice_setup();
@@ -57,34 +64,14 @@ void setup() {
   ToF_setup();
 
   //タスク作成
-  //xTaskCreateUniversal(motion_task,"motion_task",8192,NULL,1,NULL,APP_CPU_NUM);
   task_setup();
 }
 
-unsigned long pre_heatbeat=0;
-int bpm=2000;
 void loop() {
-  #ifdef BLYNK
+  //voice_loop();
   
-  #endif
   
-  //hear();
-  /*
-  if(millis()-pre_heatbeat>bpm){
-    heart();
-  }
-  int n=rand()%20;
-  if (n<=6)
-  {
-    //revi_swing();
-    //get_ToF();
-  }
-  else if(n<=7)
-  {
-    //joy();
-  }*/
-  
-  delay(10);
+  delay(1);
 }
 
 
@@ -93,13 +80,6 @@ void loop() {
  * 
 */
 #ifdef BLYNK
-BLYNK_WRITE(V2)
-{
-  Serial.print("roar");
-
-  voice("600");
-}
-
 BLYNK_WRITE(V5)
 {
   float angle = param.asFloat();
@@ -117,18 +97,32 @@ BLYNK_WRITE(V1)
   //45degに1000ms角度固定
 }
 
-BLYNK_WRITE(V4)
+/*
+BLYNK_WRITE(V2)
 {
-  int motion = param.asInt(); // assigning incoming value from pin V1 to a variable
-  
-  start_motion(motion);
-}
+  voice(FILENAME);
+}*/
 
 BLYNK_WRITE(V3)
 {
-  //Motion_R_Servo_h::stop(2);
-  servo.release();
-  //45degに1000ms角度固定
+  println("dance");
+  //Motion_ptr motion=make_motion_ptr(new Motion(dance(),CSC_1));
+  Motion_ptr motion=make_motion_ptr(new Motion(rot(3000,50),CSC_1));
+  motion->start(actuators);
+
 }
+
+BLYNK_WRITE(V10)
+{
+  int sleep = param.asInt(); // assigning incoming value from pin V1 to a variable
+
+  if(sleep==0){
+    wake_up();
+  }
+  else if(sleep==1){
+    deep_sleep();
+  }
+}
+
 #endif
 

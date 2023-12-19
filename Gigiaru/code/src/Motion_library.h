@@ -3,187 +3,153 @@
 
 #include <math.h>
 #include <stdlib.h>
-#include <memory.h>
-#include "Motion_servo.h"
-#include "Motion_r_servo.h"
-#include "voice.h"
-#include "motion.h"
+#include "gigi_component.h"
+#include "random.h"
 
+/*
+Plot_ptr turn(motion_t duration,float angle){
+  return make_plotptr(new Plot({{SERVO_ID,{{0,make_frame_ptr(new Frame_Rel(duration,angle))}}}}));//フル尺
+}*/
 
-#define SERVO_PIN 25
-#define R_SERVO_PIN 21
+Plot_ptr trn(motion_t time,float value_rel){
+  return Plot_ptr(SERVO_ID,{make_frame_ptr(new Frame_Rel(time,value_rel))});
+}
 
-Servo servo=Servo(SERVO_PIN,0,50,12,0.5,2.4,160,0);
-RServo rservo=RServo(R_SERVO_PIN,2,50,16,4885,65);//デッドバンド4820~4950
+Plot_ptr trn_to(motion_t time,float value_abs){
+  return Plot_ptr(SERVO_ID,{make_frame_ptr(new Frame_Abs(time,value_abs))});
+}
 
-using std::unique_ptr;
+Plot_ptr rot(motion_t time,float velocity){
+  return Plot_ptr(R_SERVO_ID,{make_frame_ptr(new Frame_Abs(time/6,velocity)),make_frame_ptr(new Frame_Abs(time*4/6,velocity)),make_frame_ptr(new Frame_Abs(time/6,0))});
+}
 
-MotionPlayer mplayer({&servo,&rservo,&speaker});
+/// @brief timeだけサーボを静止
+/// @param time 
+/// @return 
+Plot_ptr stop_s(motion_t time){
+  return Plot_ptr(SERVO_ID,{make_frame_ptr(new Frame_Rel(time,0))});
+}
 
-
-void joy(){
-  int SWING_T=200;
-  float SWING_S=200;
-  mplayer.set_motion(new Motion(
-    {new TRServo(&rservo,{
-      {{SWING_T,SWING_S},
-      {SWING_T,-SWING_S},
-      {SWING_T,SWING_S},
-      {SWING_T,-SWING_S},
-      {SWING_T,SWING_S},
-      {SWING_T,-SWING_S},
-      {SWING_T,0}}}),
-    new TVoice({{0,"600"}})},
-    "joy"));
+/// @brief timeだけRサーボを静止
+/// @param time 
+/// @return 
+Plot_ptr stop_r(motion_t time){
+  return Plot_ptr(R_SERVO_ID,{make_frame_ptr(new Frame_Abs(time,0))});
 }
 
 
-void sad(){
-  
-  mplayer.set_motion(new Motion({
-    new TRServo(&rservo,{
-      {{300,60},
-      {1000,60},
-      {500,0},
-      {300,60},
-      {1000,60},
-      {500,0}}})},
-    "sad"));
+/// @brief サーボモーターの往復。現在値を端に周期time*2でvalue幅を往復
+/// @param time 
+/// @param value 
+/// @param num_repeat 
+/// @return 
+Plot_ptr shake_s(motion_t time,float value,int num_repeat){
+  return (trn(time,value)+trn(time,-value))*num_repeat;
 }
 
-void clock_rot(){
-  int clock_T=100;
-  int stay_T=800;
-  float max_S=300;
-  
-  mplayer.set_motion(new Motion({
-    new TRServo(&rservo,{
-      {{clock_T,max_S},
-      {clock_T,0},
-      {stay_T,0}}})},
-    "clock"));
+vector<Frame_ptr> charge(motion_t time,float value){
+  return {make_frame_ptr(new Frame_Rel(time/6,-value/50)),make_frame_ptr(new Frame_Rel(time*5/6,value+value/50))};
 }
 
-void heart(){
-  int clock_T=100;
-  float max_S=300;
-  float second_S=150;
-  float third_S=75;;
-  
-  mplayer.set_motion(new Motion({
-    new TRServo(&rservo,{
-      {{clock_T,max_S+second_S+third_S},
-      {clock_T,0},
-      {300,0},
-      {clock_T,third_S},
-      {clock_T,0},
-      {300,0},
-      {clock_T,second_S+third_S},
-      {clock_T,0},
-      {300,0},
-      {clock_T,third_S},
-      {clock_T,0},
-      {300,0}}})},
-    "heart"));
+Plot_ptr shake_r(motion_t time,float velocity,int num_repeat){
+  return  (rot(time/2,velocity)+rot(time/2,-velocity))*num_repeat;
 }
 
-void charge_rot(){
-  int charge_T=300;
-  int rot_T=1000;
-  float charge_S=400;
-  float rot_S=700;
-  
-  mplayer.set_motion(new Motion({
-    new TRServo(&rservo,{
-      {{100,-charge_S},
-      {charge_T,0},
-      {charge_T,rot_S},
-      {rot_T,rot_S},
-      {300,0}}})},
-    "charge"));
-}
-
-void anger(){
-  float speed=300;
-  
-  mplayer.set_motion(new Motion({
-    new TRServo(&rservo,{
-      {{100,300},
-      {1500,300},
-      {100,0}}})},
-    "anger"));
-}
-
-void revi_swing(){
-  float now_a=servo.angle;
-  float angle_ma=servo.angle_max;
-  float k=2; //0<k,k≠1
-  float delta=10;
-
-  float A=0;
-  float angle=0;
-  float random=((float)rand())/RAND_MAX; //0~1の一様乱数
-
-  if (now_a<=delta)
-  {
-    A=pow(delta,1-k)-pow(angle_ma-now_a,1-k);
-    angle=now_a+pow(pow(delta,1-k)-A*random,1/(1-k));
-  }
-  else if (now_a>=angle_ma-delta)
-  {
-    A=pow(delta,1-k)-pow(now_a,1-k);
-    angle=now_a-pow(pow(now_a,1-k)+A*random,1/(1-k));
+Plot_ptr wind_step(motion_t time_goback,float range,int num,motion_t time_pause=0){
+  motion_t time_go;
+  if(time_goback<time_pause){
+    time_go=1;
+    time_pause=time_goback-2;
   }
   else{
-    A=2*pow(delta,1-k)-pow(now_a,1-k)-pow(angle_ma-now_a,1-k);
-    float c=(pow(delta,1-k)-pow(now_a,1-k))/A;
-    if (random<c)
-    {
-      angle=now_a-pow(A*random+pow(now_a,1-k),1/(1-k));
-    }
-    else{
-      angle=now_a+pow(2*pow(delta,1-k)-A*random-pow(now_a,1-k),1/(1-k));
-    }
+    time_go=(time_goback-time_pause)/2;
+  }
+
+  Plot_ptr ret=trn(time_go,range)+stop_s(time_pause);
+  
+  if(num>2){
+    ret+=((trn(time_go*2,-range*2)+stop_s(time_pause)+trn(time_go*2,range*2)+stop_s(time_pause))*((num-1)/2));
   }
   
-  //Serial.printf("angle:%f,A:%f,random:%f\n",angle,A,random);
-  
-  mplayer.set_motion(new Motion({
-    new TServo(&servo,{{{3000,angle}}})},
-    "revi"));
-}
-
-void start_motion(int key){
-  
-  switch(key){
-    case 1:
-      revi_swing();
-      break;
-    case 11:
-      joy();
-      break;
-    case 12:
-      anger();
-      break;
-    case 13:
-      sad();
-      break;
-    case 21:
-      clock_rot();
-      break;
-    case 31:
-      charge_rot();
-      break;
-
-    default:
-      Serial.printf("No motion assigned to %d\n",key);
-      break;
+  if(num%2==0){
+    ret+=(trn(time_go*2,-range*2)+stop_s(time_pause)+trn(time_go,range));
   }
+  else{
+    ret+=trn(time_go,-range);
+  }
+  return ret;
 }
 
-void motion_task(void *pvParameters){
-  while(1){
-    mplayer.motion_task();
+Plot_ptr wind_head(motion_t time_goback,float speed,int num,motion_t time_pause=0){
+  motion_t time_go;
+  if(time_goback<time_pause){
+    time_go=1;
+    time_pause=time_goback-2;
   }
+  else{
+    time_go=(time_goback-time_pause)/2;
+  }
+
+  Plot_ptr ret=rot(time_go,speed)+stop_r(time_pause);
+  
+  if(num>2){
+    ret+=((rot(time_go*2,-speed*2)+stop_r(time_pause)+rot(time_go*2,speed*2)+stop_r(time_pause))*((num-1)/2));
+  }
+  
+  if(num%2==0){
+    ret+=(rot(time_go*2,-speed*2)+stop_r(time_pause)+rot(time_go,speed));
+  }
+  else{
+    ret+=rot(time_go,-speed);
+  }
+  return ret;
 }
+
+/// @brief ダンスの最後に挿入する。これ入れないと先に終わったアクチュエータが動き出す
+/// @return 
+Plot_ptr fin(){
+  return stop_r(1)+stop_s(1);
+}
+
+Plot_ptr clock(motion_t beat,float speed){
+  return stop_r(beat/4)+rot(beat/2,speed)+stop_r(beat/4);
+}
+
+
+Plot_ptr joy(){
+  return make_plotptr(new Plot({{R_SERVO_ID,shake_r(norm(165,15,1),100,3)}}));
+}
+
+Plot_ptr dance(){
+  #define T_INIT 100
+  #define T_BEAT 457 //一拍の長さ(ms)。四拍子
+
+  #define A_SHAKE_1 30
+
+  #define T_S1_ACC 200
+  #define T_2 100
+  #define CLOCK_SPEED 60
+
+  Plot_ptr init=trn_to(500,80)+(stop_r(5000)*stop_s(5000));
+  Plot_ptr dance1=wind_step(T_BEAT,A_SHAKE_1,4,100)*(clock(T_BEAT,CLOCK_SPEED)*4);
+  Plot_ptr dance2=shake_r(T_BEAT,70,4)*(trn(T_2,40)+trn(T_BEAT*4-T_2*2,-80)+trn(T_2,40));
+  Plot_ptr dance3=wind_step(T_BEAT,20,4,50)*(clock(T_BEAT,CLOCK_SPEED)*4);
+  Plot_ptr dance4=wind_step(T_BEAT,A_SHAKE_1,2)+(shake_r(T_BEAT,70,2));
+  Plot_ptr dance5=wind_step(T_BEAT,A_SHAKE_1,4,100)*(clock(T_BEAT,-CLOCK_SPEED)*4);
+  Plot_ptr dance6=wind_step(T_BEAT,A_SHAKE_1,4,100)*(clock(T_BEAT,CLOCK_SPEED)*4);
+  Plot_ptr dance7=wind_step(T_BEAT*2,50,2,300)*(clock(T_BEAT,-CLOCK_SPEED)*4);
+  Plot_ptr dance8=(stop_s(T_BEAT)+wind_step(T_BEAT,30,2)+wind_step(T_BEAT/2,60,6))*(clock(T_BEAT,CLOCK_SPEED)*4);
+
+  Plot_ptr dance=init+dance1+dance2+dance3+dance4+dance5+dance6+dance7+dance8+fin();
+
+  return dance;
+
+}
+
+
+
+Plot_ptr charge_plot=make_plotptr(new Plot({{SERVO_ID,charge(1000,60)}}));
+//Plot_ptr new_=charge_plot+charge_plot;
+
+
 #endif
