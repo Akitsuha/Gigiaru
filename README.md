@@ -14,6 +14,8 @@
 
 ポケモン「ギギアル」のペットロボットを作りたいプロジェクト
 
+![デモ動画](https://youtube.com/shorts/ZwHQG525nb0?si=zIuGOGzvLZQPswT8)
+
 <!-- プロジェクトの概要を記載 -->
 
   <p align="left">
