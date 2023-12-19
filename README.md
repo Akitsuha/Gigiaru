@@ -16,65 +16,14 @@
 ├── README.md
 ├── code
 │   ├── data
-│   │   └── 600.mp3
 │   ├── firmware.elf
 │   ├── include
-│   │   └── README
 │   ├── lib
-│   │   └── README
 │   ├── platformio.ini
-│   ├── src
-│   │   ├── Motion_library.h
-│   │   ├── ToF_TMF8821.h
-│   │   ├── act_controler.h
-│   │   ├── actuator.h
-│   │   ├── bio_signal.h
-│   │   ├── biokinesis.h
-│   │   ├── blynk_admin.h
-│   │   ├── debug.h
-│   │   ├── decision.h
-│   │   ├── emg.h
-│   │   ├── gigi.h
-│   │   ├── gigi_component.h
-│   │   ├── main.cpp
-│   │   ├── motion.h
-│   │   ├── motion_plot.h
-│   │   ├── my_memory.h
-│   │   ├── myfunction.h
-│   │   ├── perception.h
-│   │   ├── phygiology.h
-│   │   ├── r_servo.h
-│   │   ├── random.h
-│   │   ├── sensor.h
-│   │   ├── servo.h
-│   │   ├── sight.h
-│   │   └── voice.h
+│   ├── src //主に書いたコード
 │   └── test
-│       └── README
-├── electonics
-│   ├── LipoRiderPlus
-│   │   └── Lipo Rider Plus v8.step
-│   └── library
-│       ├── TMF8821搭載 ミニdToF測距センサ
-│       │   ├── SparkFun_dToF-TMF8821_Mini.b##
-│       │   ├── SparkFun_dToF-TMF8821_Mini.brd
-│       │   ├── SparkFun_dToF-TMF8821_Mini.s##
-│       │   └── SparkFun_dToF-TMF8821_Mini.sch
-│       └── VL53L5CX搭載 ミニToF測距センサ
-│           ├── SparkFun Qwiic ToF Imager - VL53L5CX - Mini.b##
-│           ├── SparkFun Qwiic ToF Imager - VL53L5CX - Mini.brd
-│           ├── SparkFun Qwiic ToF Imager - VL53L5CX - Mini.s##
-│           └── SparkFun Qwiic ToF Imager - VL53L5CX - Mini.sch
-└── hardware
-    ├── 背面.stl
-    ├── 左上歯車.stl
-    ├── 歯車台座.stl
-    ├── 背面中央.stl
-    ├── スタンド.stl
-    ├── ボディ.stl
-    ├── コネクタメス.stl
-    ├── 中央ボタン.stl
-    └── 背面スイッチ.stl
+├── electonics //電子回路コンポーネントの設計
+└── hardware //3DCAD設計
 </pre>
 
 
