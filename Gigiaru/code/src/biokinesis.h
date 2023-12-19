@@ -21,7 +21,6 @@ public:
             heartbeat();
             pre_beat=millis();
         }
-        
     }
 
 private:

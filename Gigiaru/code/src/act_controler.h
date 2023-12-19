@@ -23,7 +23,9 @@ enum VAct_op{
     SHIFT,
 };
 
-#define CSC_INTENTIONAL 5
+#define CSC_Blynk 100
+#define CSC_1 5
+#define CSC_2 4
 #define CSC_PHYSIC 3
 #define CSC_NONE 0
 

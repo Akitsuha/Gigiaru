@@ -9,9 +9,10 @@ using std::shared_ptr;
 
 class Motion{
     Plot_ptr plot;
+    u_int8_t csclv=0; 
 
 public:
-    Motion(const Plot_ptr& plot):plot(plot){}
+    Motion(const Plot_ptr& plot,u_int8_t csclv):plot(plot),csclv(csclv){}
 
     bool start(std::map<int,ValActControler*>& actuators){
         bool ret=false;
@@ -20,7 +21,7 @@ public:
             if(actuators.find(itr->first)==actuators.end()){
                 continue;
             }
-            ret|=actuators[itr->first]->add(new EMG_plot(itr->second,CSC_INTENTIONAL));
+            ret|=actuators[itr->first]->add(new EMG_plot(itr->second,csclv));
         }
         return ret;
     }
