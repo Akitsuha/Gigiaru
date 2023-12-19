@@ -4,20 +4,36 @@
 #include "Motion_library.h"
 #include "gigi_component.h"
 #include "blynk_admin.h"
+#include "perception.h"
 
-class Decision
-{
-private:
+class Decision{
+protected:
     GigiMemory* memory;
     std::map<int,ValActControler*> actuators;
     ValActControler* servo_ctr;
     ValActControler* r_servo_ctr;
 public:
     Decision(GigiMemory* memory,std::map<int,ValActControler*> actuators):
-            memory(memory),actuators(actuators),servo_ctr(actuators.at(1)),r_servo_ctr(actuators.at(2)){}
+        memory(memory),actuators(actuators),servo_ctr(actuators.at(1)),r_servo_ctr(actuators.at(2)){}
+    virtual ~Decision(){}
+    virtual void loop()=0;
+
+};
+
+class Decision2:Decision
+{
+private:
+    Perception1* perception;
+public:
+    Decision2(GigiMemory* memory,std::map<int,ValActControler*> actuators,Perception1* perception)
+        :Decision(memory,actuators),perception(perception){}
     void loop(){
         static u_int8_t trace_th=50;
 
+        if(perception->get_entropy()>150){
+            Motion_ptr motion=make_motion_ptr(new Motion(joy(),CSC_2));
+            motion->start(actuators);
+        }
 
         //ε-グリーディ法
         static float epsilon=0.1;
@@ -39,7 +55,7 @@ public:
                 //terminal.print("max->");terminal.println(angle);
                 #endif
                 vector<Frame_ptr> frames={make_frame_ptr(new Frame_Abs(abs(angle-now_a)*50,angle))};
-                Motion_ptr motion=make_motion_ptr(new Motion(make_plotptr(new Plot({{SERVO_ID,frames}}))));
+                Motion_ptr motion=make_motion_ptr(new Motion(make_plotptr(new Plot({{SERVO_ID,frames}})),CSC_2));
                 motion->start(actuators);
             }
         }
@@ -80,9 +96,31 @@ private:
 
         vector<Frame_ptr> revi_frames={make_frame_ptr(new Frame_Abs(abs(angle-now_a)*40,angle))};
 
-        Motion_ptr motion=make_motion_ptr(new Motion(make_plotptr(new Plot({{SERVO_ID,revi_frames}}))));
+        Motion_ptr motion=make_motion_ptr(new Motion(make_plotptr(new Plot({{SERVO_ID,revi_frames}})),CSC_2));
         motion->start(actuators);
     }
+};
+
+
+class Decision1:Decision
+{
+private:
+    
+    Perception1* perception;
+public:
+    Decision1(GigiMemory* memory,std::map<int,ValActControler*> actuators,Perception1* perception)
+        :Decision(memory,actuators),perception(perception){}
+    void loop(){
+        static u_int8_t grab_th=200;
+
+        if(perception->get_ToF_avr()>grab_th){
+            Motion_ptr motion=make_motion_ptr(new Motion(make_plotptr(new Plot({{SERVO_ID,shake_s(200,60,4)}})),CSC_1));
+            motion->start(actuators);
+        }
+        
+    }
+private:
+    
 };
 
 
